@@ -1,0 +1,205 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROGRAM_NAME="$(basename "$0")"
+
+show_help() {
+    cat << EOF
+Virtual Machine Management Tool
+
+USAGE:
+    $PROGRAM_NAME <command> [options]
+
+COMMANDS:
+    create <name> <iso> [disk_size] [username] [password]
+                        Create a new VM from ISO
+    run <name> [--daemon|-d]
+                        Run an existing VM
+    stop <name>         Stop a running VM daemon
+    list                List available VMs
+    status              Show running daemon VMs
+    help                Show this help message
+
+EXAMPLES:
+    $PROGRAM_NAME create ubuntu /path/to/ubuntu.iso 20G
+    $PROGRAM_NAME run ubuntu
+    $PROGRAM_NAME run ubuntu --daemon
+    $PROGRAM_NAME stop ubuntu
+    $PROGRAM_NAME list
+    $PROGRAM_NAME status
+
+For more details on each command, use: $PROGRAM_NAME <command> --help
+EOF
+}
+
+show_create_help() {
+    cat << EOF
+Create a new virtual machine
+
+USAGE:
+    $PROGRAM_NAME create <name> <iso> [disk_size] [username] [password]
+
+ARGUMENTS:
+    name                VM name (required)
+    iso                 Path to ISO file (required)
+    disk_size          Disk size (default: 20G)
+    username           Default user (default: ubuntu)
+    password           Default password (default: ubuntu)
+
+EXAMPLES:
+    $PROGRAM_NAME create myvm /path/to/ubuntu.iso
+    $PROGRAM_NAME create myvm /path/to/ubuntu.iso 50G admin password123
+EOF
+}
+
+show_run_help() {
+    cat << EOF
+Run an existing virtual machine
+
+USAGE:
+    $PROGRAM_NAME run <name> [--daemon|-d]
+
+ARGUMENTS:
+    name                VM name (required)
+
+OPTIONS:
+    --daemon, -d        Run VM as daemon in background
+
+EXAMPLES:
+    $PROGRAM_NAME run ubuntu
+    $PROGRAM_NAME run ubuntu --daemon
+EOF
+}
+
+show_stop_help() {
+    cat << EOF
+Stop a running virtual machine daemon
+
+USAGE:
+    $PROGRAM_NAME stop <name>
+
+ARGUMENTS:
+    name                VM name (required)
+
+EXAMPLES:
+    $PROGRAM_NAME stop ubuntu
+EOF
+}
+
+cmd_create() {
+    if [[ $# -lt 2 ]]; then
+        echo "Error: Missing required arguments for create command"
+        echo ""
+        show_create_help
+        exit 1
+    fi
+    
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        show_create_help
+        exit 0
+    fi
+    
+    exec "$SCRIPT_DIR/lib/v-add.sh" "$@"
+}
+
+cmd_run() {
+    if [[ $# -lt 1 ]]; then
+        echo "Error: Missing VM name for run command"
+        echo ""
+        show_run_help
+        exit 1
+    fi
+    
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        show_run_help
+        exit 0
+    fi
+    
+    exec "$SCRIPT_DIR/lib/v-run.sh" "$@"
+}
+
+cmd_stop() {
+    if [[ $# -lt 1 ]]; then
+        echo "Error: Missing VM name for stop command"
+        echo ""
+        show_stop_help
+        exit 1
+    fi
+    
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        show_stop_help
+        exit 0
+    fi
+    
+    exec "$SCRIPT_DIR/lib/v-kill.sh" "$@"
+}
+
+cmd_list() {
+    if [[ $# -gt 0 && ("$1" == "--help" || "$1" == "-h") ]]; then
+        echo "List available virtual machines"
+        echo ""
+        echo "USAGE:"
+        echo "    $PROGRAM_NAME list"
+        exit 0
+    fi
+    
+    exec "$SCRIPT_DIR/lib/v-run.sh" list
+}
+
+cmd_status() {
+    if [[ $# -gt 0 && ("$1" == "--help" || "$1" == "-h") ]]; then
+        echo "Show running daemon virtual machines"
+        echo ""
+        echo "USAGE:"
+        echo "    $PROGRAM_NAME status"
+        echo ""
+        echo "Shows PID, status, and process information for all daemon VMs."
+        exit 0
+    fi
+    
+    exec "$SCRIPT_DIR/lib/v-run.sh" status
+}
+
+main() {
+    if [[ $# -eq 0 ]]; then
+        echo "Error: No command specified"
+        echo ""
+        show_help
+        exit 1
+    fi
+    
+    local command="$1"
+    shift
+    
+    case "$command" in
+        create)
+            cmd_create "$@"
+            ;;
+        run)
+            cmd_run "$@"
+            ;;
+        stop|kill)
+            cmd_stop "$@"
+            ;;
+        list|ls)
+            cmd_list "$@"
+            ;;
+        status)
+            cmd_status "$@"
+            ;;
+        help|--help|-h)
+            show_help
+            exit 0
+            ;;
+        *)
+            echo "Error: Unknown command '$command'"
+            echo ""
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
