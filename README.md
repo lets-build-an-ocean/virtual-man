@@ -1,3 +1,9 @@
+[![GitHub stars](https://img.shields.io/github/stars/lets-build-an-ocean/virtual-man?style=social)](https://github.com/lets-build-an-ocean/virtual-man/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/lets-build-an-ocean/virtual-man?style=social)](https://github.com/lets-build-an-ocean/virtual-man/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/lets-build-an-ocean/virtual-man)](https://github.com/lets-build-an-ocean/virtual-man/issues)
+[![License](https://img.shields.io/github/license/lets-build-an-ocean/virtual-man)](LICENSE)
+
+
 # Virtual-Man
 
 A comprehensive command-line tool for creating and managing Ubuntu virtual machines using **cloud-init autoinstall**, `qemu`, and automated provisioning.
